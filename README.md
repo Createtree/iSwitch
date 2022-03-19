@@ -258,5 +258,5 @@ void Task_Key_Scan_Callback(void)
 }
 ```
 
-
+如果你遇到问题，有不理解的地方，或是有建议，都欢迎在评论或 issue 中提出，让所有人一起讨论。
 
