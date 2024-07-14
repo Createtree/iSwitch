@@ -4,7 +4,7 @@
 /*----------------------------------------------------------------------
   - File name     : zh_iSwitch.h
   - Author        : liuzhihua
-  - Update date   : 2022.1.13                  
+  - Update date   : 2024.7.13
   -	File Function : independent siwtch drivers
 -----------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------
@@ -17,165 +17,170 @@
   * ------------   ---------------   ----------------------------------
   *   2022.1.13       liuzhihua                   Create file
   *   2022.1.26       liuzhihua		The clipping macro has been updated to save memory
-  *	  2022.3.1        liuzhihau           Optimize program structure
+  *	  2022.3.1        liuzhihua           Optimize program structure
+  *   2024.7.13       liuzhihua                 Refactoring code
 ***/
 
-#ifndef __ZH_ISWITCH_H_
-#define __ZH_ISWITCH_H_
+#ifndef __ISWITCH_H_
+#define __ISWITCH_H_
+
+/*-----------------------------------------------------------------------
+|                               INCLUDES                                |
+-----------------------------------------------------------------------*/
+
+#include <stdint.h>
 
 #ifdef  __cplusplus
     extern "C" {
 #endif
-/*-----------------------------------------------------------------------
-|                               INCLUDES                                |
------------------------------------------------------------------------*/
-#include "string.h"
 
-
-		
+#define iSW_MODE1_ENABLE        (1)
+#define iSW_MODE2_ENABLE        (1)
+#define iSW_DOUBLE_CLICK_ENABLE (1)
 /*-----------------------------------------------------------------------
 |                                DEFINES                                |
 -----------------------------------------------------------------------*/
-#ifndef NULL
-#define NULL (void*)0
-		
-#endif
-/* Exported macro ------------------------------------------------------------*/
+
+/* --------------------- Exported macro ---------------------*/
 #ifdef  USE_iSW_FULL_ASSERT
-/**
-  * @brief  The assert_param macro is used for function's parameters check.
-  * @param  expr If expr is false, it calls assert_failed function
-  *         which reports the name of the source file and the source
-  *         line number of the call that failed.
-  *         If expr is true, it returns no value.
-  * @retval None
-  */
-#define iSW_assert_param(expr) ((expr) ? (void)0U : iSW_assert_failed((unsigned char *)__FILE__, __LINE__))
-/* Exported functions ------------------------------------------------------- */
-void iSW_assert_failed(unsigned char* file, unsigned int line);
+#define iSW_assert_param(expr) ((expr) ? (void)0U : iSW_assert_failed((uint8_t *)__FILE__, __LINE__))
+void iSW_assert_failed(uint8_t* file, uint32_t line);
 #else
 #define iSW_assert_param(expr) ((void)0U)
-#endif /* USE_FULL_ASSERT */
+#endif
 
-typedef struct iSwitch_Mode0_t{
+struct iSwitch_Mode0_TypeDef {
 
-	unsigned char shadow_status;	//<auto>Ó°×Ó×´Ì¬Î»£¬ËÉÊÖºó×ªÒÆµ½status
-	unsigned char trigger_way;		//<Mode0>´¥·¢·½Ê½[0:°´ÏÂ´¥·¢][1:ËÉ¿ª´¥·¢]
-}iSwitch_Mode0;
-		
-typedef struct iSwitch_Mode1_t{
-	
-	unsigned int trigger_cnt;		//<auto>°´¼ü´¥·¢µÄ´ÎÊı
-	unsigned int scan_time;		//<Mode1>°´¼üÁ¬Ğø´¥·¢µÄ¼ä¸ôÊ±¼ä[1,2^32-1](ms)
-	unsigned int max_trigger_cnt;	//<Mode1>°´¼ü×î´óÁ¬°´´ÎÊı[1,2^32-1]/[0]±íÊ¾ÎŞÏŞ´ÎÁ¬Ğø´¥·¢							  
-	unsigned int delay_time;		//<Mode1>°´¼ü°´ÏÂºóÁ¬Ğø´¥·¢µÄÏìÓ¦Ê±¼ä½¨ÒéÄ¬ÈÏ300ms
-}iSwitch_Mode1;
+    uint8_t shadow_status;     //<private>å½±å­çŠ¶æ€ä½ï¼Œæ¾æ‰‹åè½¬ç§»åˆ°status
+    uint8_t trigger_way;       //<Mode0>è§¦å‘æ–¹å¼[0:æŒ‰ä¸‹è§¦å‘][1:æ¾å¼€è§¦å‘]
+};
 
+struct iSwitch_Mode1_TypeDef {
 
-typedef struct iSwitch_Mode2_t{
-	
-	unsigned char shadow_status;	//<auto>Ó°×Ó×´Ì¬Î»£¬ËÉÊÖºó×ªÒÆµ½status
-	unsigned char trigger_way;		//<Mode2>´¥·¢·½Ê½[0:°´ÏÂ´¥·¢][1:ËÉ¿ª´¥·¢]
-	unsigned int short_time;		//<Mode2>°´¼ü¶Ì°´µÄ´¥·¢Ê±¼ä
-	unsigned int long_time;		//<Mode2>°´³¤°´µÄ´¥·¢Ê±¼ä
-}iSwitch_Mode2;
+    uint16_t repeat_cnt;             //<private>æŒ‰é”®è§¦å‘çš„æ¬¡æ•°
+    uint16_t repeat_interval_time;   //<Mode1>æŒ‰é”®è¿ç»­è§¦å‘çš„é—´éš”æ—¶é—´[1,2^16-1](ms)
+    uint16_t max_trigger_cnt;        //<Mode1>æŒ‰é”®æœ€å¤§è¿æŒ‰æ¬¡æ•°[1,2^16-1]/[0]è¡¨ç¤ºæ— é™æ¬¡è¿ç»­è§¦å‘
+    uint16_t repeat_start_time;      //<Mode1>æŒ‰é”®æŒ‰ä¸‹åè¿ç»­è§¦å‘çš„å“åº”æ—¶é—´å»ºè®®é»˜è®¤300ms
+};
 
-typedef union iSwitch_Mode_u{
+struct iSwitch_Mode2_TypeDef {
 
-	iSwitch_Mode0 M0;
-	iSwitch_Mode1 M1;
-	iSwitch_Mode2 M2;
-}iSW_Mode_u;	
+    uint8_t shadow_status;    //<private>å½±å­çŠ¶æ€ä½ï¼Œæ¾æ‰‹åè½¬ç§»åˆ°status
+    uint8_t trigger_way;      //<Mode2>è§¦å‘æ–¹å¼[0:æŒ‰ä¸‹è§¦å‘][1:æ¾å¼€è§¦å‘]
+    uint16_t short_time;      //<Mode2>æŒ‰é”®çŸ­æŒ‰çš„è§¦å‘æ—¶é—´
+    uint16_t long_time;       //<Mode2>æŒ‰é•¿æŒ‰çš„è§¦å‘æ—¶é—´
+};
 
-typedef struct iSwitch_Mode_t{
-	unsigned char mode; 		/**--------<must>°´¼üÄ£Ê½-------------
-								@Mode0:µ¥´¥·¢Ä£Ê½
-								@Mode1:Á¬Ğø´¥·¢¿ØÖÆÄ£Ê½(Í¨¹ımax_cnt²ÎÊı)
-								@Mode2:¶Ì°´¡¢³¤°´
-								------------------------------------**/	
-	iSW_Mode_u u;
+typedef struct iSwitch_Mode_Cfg_TypeDef {
+    /**--------<userConfig>æŒ‰é”®æ¨¡å¼-------------
+        @Mode0:å•è§¦å‘æ¨¡å¼
+        @Mode1:è¿ç»­è§¦å‘æ¨¡å¼(é€šè¿‡max_cntå‚æ•°)
+        @Mode2:çŸ­æŒ‰ã€é•¿æŒ‰
+    ------------------------------------**/
+    uint8_t mode;
+    union {
+        struct iSwitch_Mode0_TypeDef M0;
+        #if (iSW_MODE1_ENABLE == 1)
+            struct iSwitch_Mode1_TypeDef M1;
+        #endif
+        #if (iSW_MODE2_ENABLE == 1)
+            struct iSwitch_Mode2_TypeDef M2;
+        #endif
+    } u;
+}iSW_Mode_Cfg_t;
+
+//æŒ‰é”®å¥æŸ„å®šä¹‰
+typedef struct iSwitch_handle_Typedef {
+    /*--------------------- <userConfig> ---------------------*/
+    uint8_t trigger;            // æŒ‰é”®è§¦å‘çš„è§¦å‘ç”µå¹³[0]/[1]
+    uint8_t debouncing_time;    // æ¶ˆæŠ–æ—¶é—´[0,255](tick)
+    #if (iSW_DOUBLE_CLICK_ENABLE == 1)
+        uint8_t double_max_time;// åŒå‡»æœ€å¤§å“åº”é˜ˆå€¼[0,255](tick)
+        uint8_t double_min_time;// åŒå‡»æœ€å°å“åº”é˜ˆå€¼[0:(ç¦ç”¨åŠŸèƒ½),255](tick)
+    #endif
+    iSW_Mode_Cfg_t t;           // æ¨¡å¼é…ç½®
+    /*--------------------- <userReadOnly> ---------------------*/
+    uint8_t events;             // æŒ‰é”®çŠ¶æ€(å‚è€ƒiSW_Eventå®šä¹‰)
+    uint8_t scan_status;        // æŒ‰é”®æŒ‰ä¸‹åçš„æ‰«æçŠ¶æ€(å‚è€ƒiSW_ScanStatus_TypeDefå®šä¹‰)
+    uint16_t scan_time_cnt;     // æŒ‰é”®æ‰«æå‰©ä½™çš„ç­‰å¾…æ—¶é—´[1,2^16-1](tick)
+    uint16_t status_time;       // é‡Šæ”¾çš„æ—¶é—´/æŒ‰ä¸‹çš„æ—¶é—´(tick)
+    uint16_t status_time_cnt;   // è®°å½•æŒ‰ä¸‹çš„æ—¶é—´(tick)
+}iSW_t;
+
+typedef enum iSwitch_Mode_Typedef{
+    iSW_MODE_SINGLE = 0,
+    iSW_MODE_REPEAT = 1,
+    ISW_MODE_PRESS  = 2
 }iSW_Mode_t;
 
-typedef struct Switch_Handle_TypeDef//°´¼ü¾ä±ú¶¨Òå
-{
-	const unsigned char id;			//<must>ÊµÀıID[0,31]
-	unsigned char trigger;		//<must>°´¼ü´¥·¢µÄ´¥·¢µçÆ½[0]/[1]
-	unsigned char shake_time;	//<must>Ïû¶¶Ê±¼ä(ms)
+enum iSW_ScanStatus_TypeDef{
+    iSW_SCAN_INIT = 0,
+    iSW_SCAN_DEBOUNCE,
+    iSW_SCAN_TRIGGER,
+    iSW_SCAN_MODE0_0,
+    iSW_SCAN_MODE1_0,
+    iSW_SCAN_MODE1_1,
+    iSW_SCAN_MODE1_2,
+    iSW_SCAN_MODE2_0,
+    iSW_SCAN_MODE2_1,
+    iSW_SCAN_IDLE
+};
 
+typedef enum iSwitch_Event_TypeDef{
 
-	unsigned char status;				//<auto>°´¼ü×´Ì¬Bit[1:´¥·¢]/[0:Î´´¥·¢],²Î¿¼enum iSwitch_STATUS
-	unsigned int scan_time_cnt;		//<auto>°´¼üÉ¨ÃèÊ£ÓàµÄµÈ´ıÊ±¼ä[1,2^32-1](ms)
-	unsigned char scan_status;			//<auto>°´¼ü°´ÏÂºóµÄÉ¨Ãè×´Ì¬[0:È¥¶¶Ì¬][99:³õÌ¬][100:¿ÕÏĞÌ¬]
+    iSW_EVENT_PRESS         = 1<<0,  // æŒ‰ä¸‹
+    iSW_EVENT_RELEASE       = 1<<1,  // é‡Šæ”¾
+    iSW_EVENT_CLICK         = 1<<2,  // å•å‡»
+    iSW_EVENT_REPEAT        = 1<<3,  // è¿ç»­è§¦å‘
+    iSW_EVENT_SHORT         = 1<<4,  // çŸ­æŒ‰
+    iSW_EVENT_LONG          = 1<<5,  // é•¿æŒ‰
+    iSW_EVENT_DOUBLE_CLICK  = 1<<6,  // åŒå‡»
+    iSW_EVENT_ALL          = 0xFF    // å…¨éƒ¨äº‹ä»¶
+}iSW_Event_t;
 
-	unsigned int status_time;			//<auto>ÊÍ·ÅµÄÊ±¼ä/°´ÏÂµÄÊ±¼ä
-	unsigned int status_time_cnt;		//<auto>¼ÇÂ¼°´ÏÂµÄÊ±¼ä
-	//<optional>
-	unsigned char double_max_time;		//<optional>Ë«»÷×î´óÏìÓ¦ãĞÖµ[0,255](ms)
-	unsigned char double_min_time;		//<optional>Ë«»÷×îĞ¡ÏìÓ¦ãĞÖµ(0:½ûÓÃ¹¦ÄÜ,255]
-	//<Mode config>
-	iSW_Mode_t t;
-	
-}Switch_t;
-
-typedef enum iSwitch_Mode_ENUM{
-	iSW_Mode0=0,
-	iSW_Mode1,
-	ISW_Mode2
-}iSW_Mode;
-
-#define iSW(x) iSW##x
-typedef enum iSwitch_ID_ENUM{
-	iSW(0)=0,
-	iSW(1),
-	iSW(2),
-	iSW(3),
-	iSW(4),
-	iSW(5),
-	iSW(6),
-	iSW(7),
-	iSW(8),
-	iSW(9),
-	iSW(10),
-	iSW(11),
-	iSW(12),
-	iSW(13),
-	iSW(14),
-	iSW(15)
-}iSW_ID;
-
-typedef enum iSwitch_STATUS{
-	iSW_Mode0_Bit			= 0,
-	iSW_Mode1_Bit			= 1,
-	iSW_Mode2_Short_Bit		= 2,
-	iSW_Mode2_Long_Bit		= 3,
-	iSW_Double_Click_Bit	= 4,
-
-}iSW_STATUS;
-
-
-#define iSW_New_Mode() 
-
-
-#define iSW_LONG 20		//°´¼üÊıÁ¿£¬×î´ó32¸ö
-#define SHAKE_TIME 10	//Ä¬ÈÏÏû¶¶Ê±¼ä(ms)
-#define ISWITCH_DEBUG 0
+#define iSW_TRIGGER_LEVEL_LOW  0
+#define iSW_TRIGGER_LEVEL_HIGH 1
+#define iSW_TRIGGER_WAY_PRESS  0
+#define iSW_TRIGGER_WAY_RELEASE 1
 /*-----------------------------------------------------------------------
 |                             API FUNCTION                              |
 -----------------------------------------------------------------------*/
-unsigned int iSWx_Scan(unsigned char status,Switch_t* pSwitc);
-unsigned int iSWx_Handler(unsigned int status32);
-
-iSW_Mode_t iSW_To_Mode0(iSW_ID iSW_id,unsigned char way);
-iSW_Mode_t iSW_To_Mode1(iSW_ID iSW_id,unsigned int delay,unsigned int scan_time,unsigned int max_cnt);
-iSW_Mode_t iSW_To_Mode2(iSW_ID iSW_id,unsigned int long_time,unsigned int short_time,unsigned char way);
-unsigned char iSW_Set_Mode(iSW_ID iSW_id,iSW_Mode_t* Mode);
-unsigned char iSW_Get_Mode(iSW_ID iSW_id);
-
-Switch_t* iSW_Get_Handle(iSW_ID iSW_id);
-unsigned char iSW_Set_Double_Click(iSW_ID id,unsigned char max,unsigned char min);
-unsigned char iSW_Get_Status(iSW_ID iSW_id,iSW_STATUS Bit);
-unsigned char iSW_Get_All_Status(iSW_ID iSW_id);
-void iSW_Clear(Switch_t *pSW, unsigned int size);
+#define iSW_IS_PRESS(pSW)        ((pSW)->scan_status != iSW_SCAN_INIT)
+#define iSW_EVENT_CLEAR(pSW, x)  ((pSW)->events &= ~(x))
+#define iSW_EVENT_SET(pSW, x) 	 ((pSW)->events |= (x))
+#define iSW_Set_Signle           iSW_Set_Mode0
+#define iSW_Set_Repeat           iSW_Set_Mode1
+#define iSW_Set_Press            iSW_Set_Mode2
+void iSW_Init(iSW_t *pSW, uint16_t length, uint8_t trigger, uint8_t debouncing_time);
+uint32_t iSW_Scan(iSW_t *pSW, const uint8_t *inputs, uint32_t length);
+void iSW_Set_Mode(iSW_t *pSW, iSW_Mode_Cfg_t* Mode);
+void iSW_Set_Mode0(iSW_t *pSW, uint8_t triggerWay);
+#if (iSW_MODE1_ENABLE == 1)
+#define iSW_Get_RepeatCnt(pSW)   ((pSW)->t.u.M1.repeat_cnt)
+    void iSW_Set_Mode1(iSW_t *pSW,
+                    uint16_t repeatDelay,
+                    uint16_t repeatInterval,
+                    uint16_t max_cnt);
+#else
+    #define iSW_Get_RepeatCnt(pSW)   0
+    #define iSW_Set_Mode1( pSW, repeatDelay, repeatInterval, max_cnt)
+#endif
+#if (iSW_MODE2_ENABLE == 1)
+    void iSW_Set_Mode2(iSW_t *pSW,
+                    uint16_t long_time,
+                    uint16_t short_time,
+                    uint8_t triggerWay);
+#else
+    #define iSW_Set_Mode2(pSW, long_time, short_time, triggerWay)
+#endif
+#if (iSW_DOUBLE_CLICK_ENABLE == 1)
+    void iSW_Set_Double_Click(iSW_t *pSW, uint8_t min, uint8_t max);
+#else
+    #define iSW_Set_Double_Click(pSW, min, max);
+#endif
+uint8_t iSW_Get_Mode(iSW_t *pSW);
+uint8_t iSW_Get_Events(iSW_t *pSW, uint8_t eventMask);
+void iSW_Clear(iSW_t *pSW, uint32_t length);
 
 #ifdef __cplusplus
 }

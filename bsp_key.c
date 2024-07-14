@@ -1,19 +1,8 @@
-# iSwitch 
+#include "bsp_key.h"
+#include "gpio.h"
+#include "FreeRTOS.h"
+#include "bsp_uart.h"
 
-## 简介
-
->iSwitch 是一个针对按键的驱动，它能对按键进行软件去抖，支持多个按键同时按下无冲突，同时拓展了按键的功能，如长按、短按、连续触发、松手触发、组合键等。
-
-## 使用要求
-
-- 1~20ms的定时调用
-
-## 使用方法
-
-> 参考 `bsp_key.h`
-
-```C
-#include ...
 // 调试打印
 #define debugPrint(str, ...) UARTx_Printf(&huart1, str, ##__VA_ARGS__)
 // 按键输入电平读取
@@ -58,13 +47,29 @@ void TaskInput(void const * argument)
             /* [5] 按键事件处理 */
             if (hisw1[0].events)
             {
+                if (hisw1[0].events & iSW_EVENT_PRESS)
+                {
+                    debugPrint("KEY0 press start\n\r");
+                }
                 if (hisw1[0].events & iSW_EVENT_CLICK)
                 {
                     debugPrint("KEY0 click\n\r");
                 }
+                if (hisw1[0].events & iSW_EVENT_DOUBLE_CLICK)
+                {
+                    debugPrint("KEY0 double click\n\r");
+                }
+                if (hisw1[0].events & iSW_EVENT_RELEASE)
+                {
+                    debugPrint("KEY0 release\n\r");
+                }
             }
             if (hisw1[1].events)
             {
+                if (hisw1[1].events & iSW_EVENT_PRESS)
+                {
+                    debugPrint("KEY1 press start\n\r");
+                }
                 if (hisw1[1].events & iSW_EVENT_CLICK)
                 {
                     debugPrint("KEY1 click\n\r");
@@ -73,9 +78,17 @@ void TaskInput(void const * argument)
                 {
                     debugPrint("KEY1 repeat:%d\n\r", iSW_Get_RepeatCnt(&hisw1[1]));
                 }
+                if (hisw1[1].events & iSW_EVENT_RELEASE)
+                {
+                    debugPrint("KEY1 release\n\r");
+                }
             }
             if (hisw1[2].events)
             {
+                if (hisw1[2].events & iSW_EVENT_CLICK)
+                {
+                    debugPrint("KEY2 click\n\r");
+                }
                 if (hisw1[2].events & iSW_EVENT_REPEAT)
                 {
                     debugPrint("KEY2 repeat:%d\n\r", iSW_Get_RepeatCnt(&hisw1[2]));
@@ -92,6 +105,10 @@ void TaskInput(void const * argument)
             }
             if (hisw1[3].events)
             {
+                if (hisw1[3].events & iSW_EVENT_PRESS)
+                {
+                    debugPrint("KEY3 press start\n\r");
+                }
                 if (hisw1[3].events & iSW_EVENT_LONG)
                 {
                     debugPrint("KEY3 long press\n\r");
@@ -99,6 +116,10 @@ void TaskInput(void const * argument)
                 if (hisw1[3].events & iSW_EVENT_SHORT)
                 {
                     debugPrint("KEY3 short press\n\r");
+                }
+                if (hisw1[3].events & iSW_EVENT_RELEASE)
+                {
+                    debugPrint("KEY3 release\n\r");
                 }
             }
         }
@@ -109,5 +130,4 @@ void TaskInput(void const * argument)
     }
 }
 
-```
 
