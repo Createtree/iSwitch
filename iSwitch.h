@@ -4,7 +4,7 @@
 /*----------------------------------------------------------------------
   - File name     : zh_iSwitch.h
   - Author        : liuzhihua
-  - Update date   : 2024.7.13
+  - Update date   : 2024.9.7
   -	File Function : independent siwtch drivers
 -----------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------
@@ -19,6 +19,7 @@
   *   2022.1.26       liuzhihua		The clipping macro has been updated to save memory
   *	  2022.3.1        liuzhihua           Optimize program structure
   *   2024.7.13       liuzhihua                 Refactoring code
+  *   2024.9.7        liuzhihua     Modify the triggering way of long press
 ***/
 
 #ifndef __ISWITCH_H_
@@ -142,6 +143,7 @@ typedef enum iSwitch_Event_TypeDef{
 #define iSW_TRIGGER_LEVEL_HIGH 1
 #define iSW_TRIGGER_WAY_PRESS  0
 #define iSW_TRIGGER_WAY_RELEASE 1
+#define ISW_TRIGGER_CNT_INF    0
 /*-----------------------------------------------------------------------
 |                             API FUNCTION                              |
 -----------------------------------------------------------------------*/
@@ -152,7 +154,7 @@ typedef enum iSwitch_Event_TypeDef{
 #define iSW_Set_Repeat           iSW_Set_Mode1
 #define iSW_Set_Press            iSW_Set_Mode2
 void iSW_Init(iSW_t *pSW, uint16_t length, uint8_t trigger, uint8_t debouncing_time);
-uint32_t iSW_Scan(iSW_t *pSW, const uint8_t *inputs, uint32_t length);
+uint32_t iSW_Scan(iSW_t *pSW, const uint8_t *inputs, uint32_t length, uint16_t millisecond);
 void iSW_Set_Mode(iSW_t *pSW, iSW_Mode_Cfg_t* Mode);
 void iSW_Set_Mode0(iSW_t *pSW, uint8_t triggerWay);
 #if (iSW_MODE1_ENABLE == 1)

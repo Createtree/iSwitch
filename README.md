@@ -22,7 +22,7 @@
 iSW_t hisw1[BSP_KEY_NUM] = {0};
 
 /* [2] 实现按键电平读取接口 */
-void bsp_key_input_raed(uint8_t *results, uint16_t num)
+void bsp_key_input_read(uint8_t *results, uint16_t num)
 {
     if (results == NULL || num == 0)
         return ;
@@ -32,28 +32,33 @@ void bsp_key_input_raed(uint8_t *results, uint16_t num)
     results[3] = Bsp_Key_ReadPin(SW4_GPIO_Port, SW4_Pin);
 }
 
+/* ---[3] 初始按键并配置功能--- */
+void bsp_key_init(void)
+{
+    // 初始化按键 设置触发为低电平，消抖时间为20ms
+    iSW_Init(hisw1, BSP_KEY_NUM, iSW_TRIGGER_LEVEL_LOW, 20);
+    // 设置按键0为模式0，触发方式为按下触发，双击时间为40ms~200ms
+    iSW_Set_Mode0(&hisw1[0], iSW_TRIGGER_WAY_PRESS);
+    iSW_Set_Double_Click(&hisw1[0], 40, 200);
+    // 设置按键1为模式1，连发延时为1s，连发间隔为100ms，次数为无限次
+    iSW_Set_Mode1(&hisw1[1], 1000, 100, ISW_TRIGGER_CNT_INF);
+    // 设置按键2为模式1，连发延时为1s，连发间隔为100ms，次数为无限次
+    // 双击时间为40ms~100ms
+    iSW_Set_Mode1(&hisw1[2], 1000, 100, ISW_TRIGGER_CNT_INF);
+    iSW_Set_Double_Click(&hisw1[2], 40, 100);
+    // 设置按键3为模式2，长按时间为2s，短按时间为20ms 触发方式为松开触发
+    iSW_Set_Mode2(&hisw1[3], 2000, 20, iSW_TRIGGER_WAY_RELEASE);
+}
+
 void TaskInput(void const * argument)
 {
     uint8_t key_input[BSP_KEY_NUM];
-    /*-------------------[3] 初始按键并配置功能-------------------*/
-    // 初始化按键 设置触发为低电平，消抖时间为2tick(20ms)
-    iSW_Init(hisw1, BSP_KEY_NUM, iSW_TRIGGER_LEVEL_LOW, 2);
-    // 设置按键0为模式0，触发方式为按下触发，双击时间为4~10tick(40Ms~200ms)
-    iSW_Set_Mode0(&hisw1[0], iSW_TRIGGER_WAY_PRESS);
-    iSW_Set_Double_Click(&hisw1[0], 4, 20);
-    // 设置按键1为模式1，连发延时为100tick(1s)，连发间隔为10tick(100ms)，次数为无限次
-    iSW_Set_Mode1(&hisw1[1], 100, 10, 0);
-    // 设置按键2为模式1，连发延时为100tick(1s)，连发间隔为10tick(100ms)，次数为无限次
-    // 双击时间为4~10tick(40Ms~100ms)
-    iSW_Set_Mode1(&hisw1[2], 100, 10, 0);
-    iSW_Set_Double_Click(&hisw1[2], 4, 10);
-    // 设置按键3为模式2，长按时间为200tick(2s)，短按时间为2tick(20ms) 触发方式为按下触发
-    iSW_Set_Mode2(&hisw1[3], 200, 2, iSW_TRIGGER_WAY_PRESS);
+    bsp_key_init(); // 初始化按键设置
     while(1)
     {
         /* [4] 在任务或定时器(1~20ms)中读取按键输入数据，并使用iSW_Scan来扫描输入数据 */
-        bsp_key_input_raed(key_input, BSP_KEY_NUM);
-        if (iSW_Scan(hisw1, key_input, BSP_KEY_NUM))
+        bsp_key_input_read(key_input, BSP_KEY_NUM);
+        if (iSW_Scan(hisw1, key_input, BSP_KEY_NUM, 10)) // 10ms扫描一次
         {
             /* [5] 按键事件处理 */
             if (hisw1[0].events)
@@ -104,7 +109,7 @@ void TaskInput(void const * argument)
         }
         // 清空按键事件
         iSW_Clear(hisw1, BSP_KEY_NUM);
-        // 延时10ms.所以1个tick是10ms
+        // 延时10ms
         osDelay(10);
     }
 }

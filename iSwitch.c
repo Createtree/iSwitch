@@ -101,24 +101,22 @@ static uint8_t iSWx_Do_Mode2(iSW_t* pSW)
         if(pSW->status_time >= pSW->t.u.M2.long_time)
         {
             // only trigger once when long press and trigger_way is 1
-            if(pSW->t.u.M2.trigger_way == 0)
-                iSW_EVENT_SET(pSW, iSW_EVENT_LONG);
-            else
-                pSW->t.u.M2.shadow_status = iSW_EVENT_LONG;
+            pSW->t.u.M2.shadow_status = 0;
+            iSW_EVENT_SET(pSW, iSW_EVENT_LONG);
             pSW->scan_status = iSW_SCAN_IDLE;
             DebugPrintf("iSW]Long Press Tirgger,time=%d,events=%d\n\r",
-                        pSW->status_time, pSW->t.u.M2.shadow_status);
+                        pSW->status_time, pSW->events);
         }
     }
     return 0;
 }
 #endif
 
-static uint8_t iSWx_StateMachine(iSW_t* pSW, uint8_t state)
+static uint8_t iSWx_StateMachine(iSW_t* pSW, uint8_t state, uint16_t millisecond)
 {
     if (pSW->status_time < 0xFFFF)
     {
-        pSW->status_time++;
+        pSW->status_time += millisecond;
     }
     switch (pSW->scan_status)
     {
@@ -199,7 +197,8 @@ static uint8_t iSWx_StateMachine(iSW_t* pSW, uint8_t state)
         case ISW_MODE_PRESS:
             #if (iSW_MODE2_ENABLE == 1)
             {
-                pSW->events |= pSW->t.u.M2.shadow_status;
+                // only trigger once,long preess or short press
+                pSW->events |= pSW->t.u.M2.shadow_status & iSW_EVENT_SHORT;
                 pSW->t.u.M2.shadow_status = 0;
             }
             #endif
@@ -260,17 +259,17 @@ void iSW_Clear(iSW_t *pSW, uint32_t length)
   * @param  pSW    :iSwitch Struct handle
   * @param  status :Key input status
   * @param  length :Key input length
-  * @note   This function requires 1ms~20ms clock
+  * @param  millisecond :Clock cycle [1ms~20ms]
   * @retval [0]Not trigger,[1]Trigger
   */
-uint32_t iSW_Scan(iSW_t *pSW, const uint8_t *inputs, uint32_t length)
+uint32_t iSW_Scan(iSW_t *pSW, const uint8_t *inputs, uint32_t length, uint16_t millisecond)
 {
     int i;
     uint32_t triggerNum = 0;
     iSW_assert_param(pSW != NULL && inputs != NULL);
     for (i = 0; i < length; i++)
     {
-        iSWx_StateMachine(&pSW[i], inputs[i]);
+        iSWx_StateMachine(&pSW[i], inputs[i], millisecond);
         if (pSW[i].events > 0)
         {
             triggerNum++;
@@ -302,7 +301,7 @@ void iSW_Set_Mode0(iSW_t *pSW, uint8_t triggerWay)
   * @param  pSW            :iSwitch handle
   * @param  repeatDelay    :Delay time of repeat triggering
   * @param  repeatInterval :Time interval of continuous triggering
-  * @param  max_cnt        :Maximum trigger times
+  * @param  max_cnt        :Maximum trigger times [0:unlimited]
   * @retval None
   */
 void iSW_Set_Mode1(iSW_t *pSW,
