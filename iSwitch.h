@@ -20,6 +20,7 @@
   *	  2022.3.1        liuzhihua           Optimize program structure
   *   2024.7.13       liuzhihua                 Refactoring code
   *   2024.9.7        liuzhihua     Modify the triggering way of long press
+  *   2024.9.7        liuzhihua           Support key combination
 ***/
 
 #ifndef __ISWITCH_H_
@@ -94,18 +95,18 @@ typedef struct iSwitch_Mode_Cfg_TypeDef {
 typedef struct iSwitch_handle_Typedef {
     /*--------------------- <userConfig> ---------------------*/
     uint8_t trigger;            // 按键触发的触发电平[0]/[1]
-    uint8_t debouncing_time;    // 消抖时间[0,255](tick)
+    uint8_t debouncing_time;    // 消抖时间[0,255](ms)
     #if (iSW_DOUBLE_CLICK_ENABLE == 1)
-        uint8_t double_max_time;// 双击最大响应阈值[0,255](tick)
-        uint8_t double_min_time;// 双击最小响应阈值[0:(禁用功能),255](tick)
+        uint8_t double_max_time;// 双击最大响应阈值[0,255](ms)
+        uint8_t double_min_time;// 双击最小响应阈值[0:(禁用功能),255](ms)
     #endif
     iSW_Mode_Cfg_t t;           // 模式配置
     /*--------------------- <userReadOnly> ---------------------*/
     uint8_t events;             // 按键状态(参考iSW_Event定义)
     uint8_t scan_status;        // 按键按下后的扫描状态(参考iSW_ScanStatus_TypeDef定义)
-    uint16_t scan_time_cnt;     // 按键扫描剩余的等待时间[1,2^16-1](tick)
-    uint16_t status_time;       // 释放的时间/按下的时间(tick)
-    uint16_t status_time_cnt;   // 记录按下的时间(tick)
+    uint16_t scan_time_cnt;     // 按键扫描剩余的等待时间[1,2^16-1](ms)
+    uint16_t status_time;       // 释放的时间/按下的时间(ms)
+    uint16_t status_time_cnt;   // 记录按下的时间(ms)
 }iSW_t;
 
 typedef enum iSwitch_Mode_Typedef{
@@ -144,6 +145,8 @@ typedef enum iSwitch_Event_TypeDef{
 #define iSW_TRIGGER_WAY_PRESS  0
 #define iSW_TRIGGER_WAY_RELEASE 1
 #define ISW_TRIGGER_CNT_INF    0
+#define iSW_STATUS_PRESS       1
+#define iSW_STATUS_RELEASE     0
 /*-----------------------------------------------------------------------
 |                             API FUNCTION                              |
 -----------------------------------------------------------------------*/
@@ -182,6 +185,9 @@ void iSW_Set_Mode0(iSW_t *pSW, uint8_t triggerWay);
 #endif
 uint8_t iSW_Get_Mode(iSW_t *pSW);
 uint8_t iSW_Get_Events(iSW_t *pSW, uint8_t eventMask);
+uint8_t iSW_Get_Status(iSW_t *pSW);
+uint8_t iSW_Combine(uint32_t num, iSW_t *pSW, ...);
+void iSW_Set_Idle(uint32_t num, iSW_t *pSW, ...);
 void iSW_Clear(iSW_t *pSW, uint32_t length);
 
 #ifdef __cplusplus

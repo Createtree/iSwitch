@@ -4,7 +4,7 @@
 /*----------------------------------------------------------------------
   - File name     : bsp_key.h
   - Author        : liuzhihua
-  - Update date   : 2024.07.14
+  - Update date   : 2024.09.07
   -	File Function : borad key driver
   - Version       : V1.0
 -----------------------------------------------------------------------*/
@@ -17,6 +17,7 @@
   *     Date            Author                      Note
   * ------------   ---------------   ----------------------------------
   *  2024.07.14        liuzhihua                 Create file
+  *  2024.09.07        liuzhihua                 Update file
 ***/
 
 #ifndef __BSP_KEY_H__
@@ -41,6 +42,8 @@ extern iSW_t hisw1[BSP_KEY_NUM];
 /*-----------------------------------------------------------------------
 |                             API FUNCTION                              |
 -----------------------------------------------------------------------*/
+void bsp_key_init(void);
+void bsp_key_input_read(uint8_t offset, uint8_t *results, uint16_t num);
 void TaskInput(void const * argument);
 
 #ifdef __cplusplus

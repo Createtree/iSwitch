@@ -1,5 +1,6 @@
 #include "iSwitch.h"
 #include <string.h>
+#include <stdarg.h>
 
 #define DebugPrintf(str, ...) 
 const uint8_t mode_branch[3] = {iSW_SCAN_MODE0_0, iSW_SCAN_MODE1_0, iSW_SCAN_MODE2_0};
@@ -399,4 +400,86 @@ uint8_t iSW_Get_Events(iSW_t *pSW, uint8_t eventMask)
     /* Auto Clear Trigger Flag */
     iSW_EVENT_CLEAR(pSW, eventMask);
     return ret;
+}
+
+/**
+ * @brief get iSwitch press status
+ * @param pSW :iSwitch handle
+ * @retval uint8_t : 0:false 1:true
+ */
+uint8_t iSW_Get_Status(iSW_t *pSW)
+{
+    iSW_assert_param(pSW != NULL);
+    return pSW->scan_status != iSW_SCAN_INIT;
+}
+
+/**
+ * @brief get key conbination status
+ * @param num :number of iSwitch
+ * @param pSW :iSwitch handle
+ * @param ... :iSwitch index
+ * @retval uint8_t : 0:false 1:true
+ */
+uint8_t iSW_Combine(uint32_t num, iSW_t *pSW, ...)
+{
+    iSW_assert_param(pSW != NULL || num > 0);
+    uint8_t state = 1;
+    uint32_t pos;
+    va_list args;
+    va_start(args, pSW);
+    for (size_t i = 0; i < num; i++)
+    {
+        pos = va_arg(args, uint32_t);
+        state = state && pSW[pos].scan_status != iSW_SCAN_INIT;
+        if (!state)
+        {
+            DebugPrintf("[iSW] Combine: %d is not pressed\r\n", pos);
+            break;
+        }
+    }
+    va_end(args);
+    return state;
+}
+
+/**
+ * @brief Clear iSW Status and Event
+ * @param num number of iSwitch
+ * @param pSW iswitch handle
+ * @param ... iSwitch index
+ */
+void iSW_Set_Idle(uint32_t num, iSW_t *pSW, ...)
+{
+    iSW_assert_param(pSW != NULL || num > 0);
+    uint32_t pos;
+    va_list args;
+    va_start(args, pSW);
+    for (size_t i = 0; i < num; i++)
+    {
+        pos = va_arg(args, uint32_t);
+        pSW[pos].scan_status = iSW_SCAN_IDLE;
+        pSW[pos].events = 0;
+        switch (pSW[pos].t.mode)
+        {
+        case iSW_MODE_SINGLE:
+            pSW[pos].t.u.M0.shadow_status = 0;
+            break;
+        case iSW_MODE_REPEAT:
+            #if (iSW_MODE1_ENABLE == 1)
+            {
+                pSW->t.u.M1.repeat_cnt = 0;
+            }
+            #endif
+            break;
+        case ISW_MODE_PRESS:
+            #if (iSW_MODE2_ENABLE == 1)
+            {
+                pSW[pos].t.u.M2.shadow_status = 0;
+            }
+            #endif
+            break;
+        default:
+            break;
+        }
+    }
+    va_end(args);
 }
