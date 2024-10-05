@@ -1,108 +1,37 @@
 # iSwitch
 
-## 简介
+> 通用按键处理库
 
-> iSwitch 是一个针对按键的驱动，它能对按键进行软件去抖，支持多个按键同时按下无冲突，同时拓展了按键的功能，如长按、短按、连续触发、松手触发、组合键等。
+## 特性
+
+- 支持自定义软件去抖时间
+- 支持自定义触发电平
+- 支持设置松手触发或按下触发
+- 支持多个按键同时按下无冲突
+- 支持按下、松手、点击、双击、短按、长按、连续触发等事件类型
+- 支持任意数量的组合键
+- 每个按键实例相互独立，所有接口可重入
+- 支持功能剪裁
+
+### 资源占用详情
+
+| 编译器  | 剪裁 | ROM(Byte) | RAM (Byte per instance) |
+| ------- | ---- | --------- | ----------------------- |
+| AC5 -O3 | 否   | 693       | 22                      |
+| AC6 -Os | 否   | 715       | 22                      |
+| AC5 -O3 | 是   | 397       | 14                      |
 
 ## 使用要求
 
-- 1~20ms的定时调用
+- 实现按键Pin电平读取到uint8_t数组中
+- 1~30ms的定时调用
 
 ## 使用方法
 
-> 详细用法参考 `bsp_key.h`
-
-```C
-#include ...
-// 调试打印
-#define debugPrint(str, ...) UARTx_Printf(&huart1, str, ##__VA_ARGS__)
-// 按键输入电平读取
-#define Bsp_Key_ReadPin(Port, Pin) HAL_GPIO_ReadPin(Port, Pin)
-/* [1] 创建按键对象 */
-iSW_t hisw1[BSP_KEY_NUM] = {0};
-
-/* [2] 实现按键电平读取接口 */
-void bsp_key_input_read(uint8_t *results, uint16_t num)
-{
-    if (results == NULL || num == 0)
-        return ;
-    results[0] = Bsp_Key_ReadPin(SW1_GPIO_Port, SW1_Pin);
-    results[1] = Bsp_Key_ReadPin(SW2_GPIO_Port, SW2_Pin);
-    results[2] = Bsp_Key_ReadPin(SW3_GPIO_Port, SW3_Pin);
-}
-
-/* ---[3] 初始按键并配置功能--- */
-void bsp_key_init(void)
-{
-    // 初始化按键 设置触发为低电平，消抖时间为20ms
-    iSW_Init(hisw1, BSP_KEY_NUM, iSW_TRIGGER_LEVEL_LOW, 20);
-    // 设置按键0为模式0，触发方式为按下触发，双击时间为40ms~200ms
-    iSW_Set_Mode0(&hisw1[0], iSW_TRIGGER_WAY_PRESS);
-    iSW_Set_Double_Click(&hisw1[0], 40, 200);
-    // 设置按键1为模式1，连发延时为1s，连发间隔为100ms，次数为无限次
-    iSW_Set_Mode1(&hisw1[1], 1000, 100, iSW_TRIGGER_CNT_INF);
-    // 设置按键2为模式2，长按时间为2s，短按时间为20ms 触发方式为松开触发
-    iSW_Set_Mode2(&hisw1[2], 2000, 20, iSW_TRIGGER_WAY_RELEASE);
-}
-
-void TaskInput(void const * argument)
-{
-    uint8_t key_input[BSP_KEY_NUM];
-    bsp_key_init(); // 初始化按键设置
-    while(1)
-    {
-        /* [4] 在任务或定时器(1~20ms)中读取按键输入数据，并使用iSW_Scan来扫描输入数据 */
-        bsp_key_input_read(key_input, BSP_KEY_NUM);
-        if (iSW_Scan(hisw1, key_input, BSP_KEY_NUM, 10)) // 10ms扫描一次
-        {
-            /* [5] 按键事件处理 */
-            // 组合键判断，支持任意多个按键组合，这里以两个按键为例
-            if (iSW_Combine(2, &hisw1[0], 0, 1))
-            {
-                // 组合键按下后清空按键事件并设置为空闲状态
-                iSW_Set_Idle(2, &hisw1[0], 0, 1);
-                debugPrint("combine KEY0 + KEY1\n\r");
-            }
-            // 独立判断每个按键的事件
-            if (hisw1[0].events)
-            {
-                if (hisw1[0].events & iSW_EVENT_CLICK)
-                {
-                    debugPrint("KEY0 click\n\r");
-                }
-                if (hisw1[0].events & iSW_EVENT_DOUBLE_CLICK)
-                {
-                    debugPrint("KEY0 double click\n\r");
-                }
-            }
-            if (hisw1[1].events)
-            {
-                if (hisw1[1].events & iSW_EVENT_CLICK)
-                {
-                    debugPrint("KEY1 click\n\r");
-                }
-                if (hisw1[1].events & iSW_EVENT_REPEAT)
-                {
-                    debugPrint("KEY1 repeat:%d\n\r", iSW_Get_RepeatCnt(&hisw1[1]));
-                }
-            }
-            if (hisw1[2].events)
-            {
-                if (hisw1[2].events & iSW_EVENT_LONG)
-                {
-                    debugPrint("KEY2 long press\n\r");
-                }
-                if (hisw1[2].events & iSW_EVENT_SHORT)
-                {
-                    debugPrint("KEY2 short press\n\r");
-                }
-            }
-        }
-        // 清空按键事件
-        iSW_Clear(hisw1, BSP_KEY_NUM);
-        // 延时10ms
-        osDelay(10);
-    }
-}
-
-```
+> 详细用法参考 [bsp_key.c](https://gitee.com/Createtree/iswitch/blob/master/bsp_key.c) 的示例
+> [1] 创建按键实例对象
+> [2] 实现按键电平读取接口
+> [3] 初始按键并配置功能
+> [4] 在任务或定时器(1~30ms)中读取按键输入数据，并使用iSW_Scan来扫描输入数据
+> [5] 按键事件处理
+> [6] 清空按键事件等待下次扫描

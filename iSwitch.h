@@ -2,9 +2,9 @@
 |                            FILE DESCRIPTION                           |
 -----------------------------------------------------------------------*/
 /*----------------------------------------------------------------------
-  - File name     : zh_iSwitch.h
+  - File name     : iSwitch.h
   - Author        : liuzhihua
-  - Update date   : 2024.9.7
+  - Update date   : 2024.10.5
   -	File Function : independent siwtch drivers
 -----------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------
@@ -15,12 +15,14 @@
   * ------------   ---------------   ----------------------------------
   *     Date            Author                       Note
   * ------------   ---------------   ----------------------------------
-  *   2022.1.13       liuzhihua                   Create file
-  *   2022.1.26       liuzhihua		The clipping macro has been updated to save memory
-  *	  2022.3.1        liuzhihua           Optimize program structure
-  *   2024.7.13       liuzhihua                 Refactoring code
-  *   2024.9.7        liuzhihua     Modify the triggering way of long press
-  *   2024.9.7        liuzhihua           Support key combination
+  *   2022.1.13       liuzhihua      Create file
+  *   2022.1.26       liuzhihua		 The clipping macro has been updated to save memory
+  *	  2022.3.1        liuzhihua      Optimize program structure
+  *   2024.7.13       liuzhihua      Refactoring code
+  *   2024.9.7        liuzhihua      Modify the triggering way of long press
+  *   2024.9.7        liuzhihua      Support key combination
+  *   2024.10.5       liuzhihua      Fixed the bug of debouncing 
+  *                                  and modified iSW_Combine API
 ***/
 
 #ifndef __ISWITCH_H_
@@ -35,7 +37,7 @@
 #ifdef  __cplusplus
     extern "C" {
 #endif
-
+/* Support feature cropping [0:disable/1:enable] */
 #define iSW_MODE1_ENABLE        (1)
 #define iSW_MODE2_ENABLE        (1)
 #define iSW_DOUBLE_CLICK_ENABLE (1)
@@ -144,15 +146,16 @@ typedef enum iSwitch_Event_TypeDef{
 #define iSW_TRIGGER_LEVEL_HIGH 1
 #define iSW_TRIGGER_WAY_PRESS  0
 #define iSW_TRIGGER_WAY_RELEASE 1
-#define ISW_TRIGGER_CNT_INF    0
+#define iSW_TRIGGER_CNT_INF    0
 #define iSW_STATUS_PRESS       1
 #define iSW_STATUS_RELEASE     0
 /*-----------------------------------------------------------------------
 |                             API FUNCTION                              |
 -----------------------------------------------------------------------*/
-#define iSW_IS_PRESS(pSW)        ((pSW)->scan_status != iSW_SCAN_INIT)
-#define iSW_EVENT_CLEAR(pSW, x)  ((pSW)->events &= ~(x))
-#define iSW_EVENT_SET(pSW, x) 	 ((pSW)->events |= (x))
+#define iSW_IS_PRESS(pSW)          ((pSW)->scan_status != iSW_SCAN_INIT)
+#define iSW_EVENT_CLEAR(pSW, x)    ((pSW)->events &= ~(x))
+#define iSW_EVENT_SET(pSW, x) 	   ((pSW)->events |= (x))
+#define iSW_EVENT_GET(pSW, Events) ((pSW)->events & (Events))
 #define iSW_Set_Signle           iSW_Set_Mode0
 #define iSW_Set_Repeat           iSW_Set_Mode1
 #define iSW_Set_Press            iSW_Set_Mode2
@@ -186,8 +189,8 @@ void iSW_Set_Mode0(iSW_t *pSW, uint8_t triggerWay);
 uint8_t iSW_Get_Mode(iSW_t *pSW);
 uint8_t iSW_Get_Events(iSW_t *pSW, uint8_t eventMask);
 uint8_t iSW_Get_Status(iSW_t *pSW);
-uint8_t iSW_Combine(uint32_t num, iSW_t *pSW, ...);
-void iSW_Set_Idle(uint32_t num, iSW_t *pSW, ...);
+uint8_t iSW_Combine(uint32_t num, ...);
+void iSW_Set_Idle(uint32_t num, ...);
 void iSW_Clear(iSW_t *pSW, uint32_t length);
 
 #ifdef __cplusplus

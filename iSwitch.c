@@ -133,11 +133,13 @@ static uint8_t iSWx_StateMachine(iSW_t* pSW, uint8_t state, uint16_t millisecond
         break;
     case iSW_SCAN_DEBOUNCE:
         //debouncing......
-        pSW->scan_time_cnt--;
-        if (pSW->scan_time_cnt == 0)
+        if (pSW->scan_time_cnt > millisecond)
         {
-            pSW->scan_status = iSW_SCAN_TRIGGER;
+            pSW->scan_time_cnt -= millisecond;
+            break;
         }
+        pSW->scan_time_cnt = 0;
+        pSW->scan_status = iSW_SCAN_TRIGGER;
         break;
     case iSW_SCAN_TRIGGER:
 
@@ -260,7 +262,7 @@ void iSW_Clear(iSW_t *pSW, uint32_t length)
   * @param  pSW    :iSwitch Struct handle
   * @param  status :Key input status
   * @param  length :Key input length
-  * @param  millisecond :Clock cycle [1ms~20ms]
+  * @param  millisecond :Clock cycle [1ms~30ms]
   * @retval [0]Not trigger,[1]Trigger
   */
 uint32_t iSW_Scan(iSW_t *pSW, const uint8_t *inputs, uint32_t length, uint16_t millisecond)
@@ -416,21 +418,21 @@ uint8_t iSW_Get_Status(iSW_t *pSW)
 /**
  * @brief get key conbination status
  * @param num :number of iSwitch
- * @param pSW :iSwitch handle
- * @param ... :iSwitch index
+ * @param ... :iSwitch handle
  * @retval uint8_t : 0:false 1:true
  */
-uint8_t iSW_Combine(uint32_t num, iSW_t *pSW, ...)
+uint8_t iSW_Combine(uint32_t num, ...)
 {
-    iSW_assert_param(pSW != NULL || num > 0);
+    iSW_assert_param(num > 2);
     uint8_t state = 1;
-    uint32_t pos;
+    iSW_t *pSW;
     va_list args;
-    va_start(args, pSW);
+    va_start(args, num);
     for (size_t i = 0; i < num; i++)
     {
-        pos = va_arg(args, uint32_t);
-        state = state && pSW[pos].scan_status != iSW_SCAN_INIT;
+        pSW = (iSW_t*)va_arg(args, uint32_t);
+        iSW_assert_param(pSW != NULL);
+        state = state && pSW->scan_status != iSW_SCAN_INIT;
         if (!state)
         {
             DebugPrintf("[iSW] Combine: %d is not pressed\r\n", pos);
@@ -444,24 +446,24 @@ uint8_t iSW_Combine(uint32_t num, iSW_t *pSW, ...)
 /**
  * @brief Clear iSW Status and Event
  * @param num number of iSwitch
- * @param pSW iswitch handle
- * @param ... iSwitch index
+ * @param ... iSwitch handle
  */
-void iSW_Set_Idle(uint32_t num, iSW_t *pSW, ...)
+void iSW_Set_Idle(uint32_t num, ...)
 {
-    iSW_assert_param(pSW != NULL || num > 0);
-    uint32_t pos;
+    iSW_assert_param(num > 0);
+    iSW_t *pSW;
     va_list args;
-    va_start(args, pSW);
+    va_start(args, num);
     for (size_t i = 0; i < num; i++)
     {
-        pos = va_arg(args, uint32_t);
-        pSW[pos].scan_status = iSW_SCAN_IDLE;
-        pSW[pos].events = 0;
-        switch (pSW[pos].t.mode)
+        pSW = (iSW_t*)va_arg(args, uint32_t);
+        iSW_assert_param(pSW != NULL);
+        pSW->scan_status = iSW_SCAN_IDLE;
+        pSW->events = 0;
+        switch (pSW->t.mode)
         {
         case iSW_MODE_SINGLE:
-            pSW[pos].t.u.M0.shadow_status = 0;
+            pSW->t.u.M0.shadow_status = 0;
             break;
         case iSW_MODE_REPEAT:
             #if (iSW_MODE1_ENABLE == 1)
@@ -473,7 +475,7 @@ void iSW_Set_Idle(uint32_t num, iSW_t *pSW, ...)
         case ISW_MODE_PRESS:
             #if (iSW_MODE2_ENABLE == 1)
             {
-                pSW[pos].t.u.M2.shadow_status = 0;
+                pSW->t.u.M2.shadow_status = 0;
             }
             #endif
             break;

@@ -66,92 +66,87 @@ void TaskInput(void const * argument)
     bsp_key_init(); // 初始化按键设置
     while(1)
     {
-        /* [4] 在任务或定时器(1~20ms)中读取按键输入数据，并使用iSW_Scan来扫描输入数据 */
+        /* [4] 在任务或定时器(1~30ms)中读取按键输入数据，并使用iSW_Scan来扫描输入数据 */
         bsp_key_input_read(0, key_input, BSP_KEY_NUM);
         if (iSW_Scan(hisw1, key_input, BSP_KEY_NUM, 10)) // 10ms扫描一次
         {
             /* [5] 按键事件处理 */
             // 组合键判断，支持任意多个按键组合，这里以两个按键为例
-            if (iSW_Combine(2, &hisw1[0], 0, 1))
+            if (iSW_Combine(2, &hisw1[0], &hisw1[1]))
             {
                 // 组合键按下后清空按键事件并设置为空闲状态
-                iSW_Set_Idle(2, &hisw1[0], 0, 1);
+                iSW_Set_Idle(2, &hisw1[0], &hisw1[1]);
                 debugPrint("combine KEY0 + KEY1\n\r");
             }
             // 独立判断每个按键的事件
-            if (hisw1[0].events)
+            if (iSW_EVENT_GET(&hisw1[0], iSW_EVENT_ALL))
             {
-                if (hisw1[0].events & iSW_EVENT_PRESS)
+                if (iSW_EVENT_GET(&hisw1[0], iSW_EVENT_PRESS))
                 {
                     debugPrint("KEY0 press start\n\r");
                 }
-                if (hisw1[0].events & iSW_EVENT_CLICK)
+                if (iSW_EVENT_GET(&hisw1[0], iSW_EVENT_CLICK))
                 {
                     debugPrint("KEY0 click\n\r");
                 }
-                if (hisw1[0].events & iSW_EVENT_DOUBLE_CLICK)
+                if (iSW_EVENT_GET(&hisw1[0], iSW_EVENT_DOUBLE_CLICK))
                 {
                     debugPrint("KEY0 double click\n\r");
                 }
-                if (hisw1[0].events & iSW_EVENT_RELEASE)
+                if (iSW_EVENT_GET(&hisw1[0], iSW_EVENT_RELEASE))
                 {
                     debugPrint("KEY0 release\n\r");
                 }
             }
-            if (hisw1[1].events)
+            if (iSW_EVENT_GET(&hisw1[1], iSW_EVENT_ALL))
             {
-                if (hisw1[1].events & iSW_EVENT_PRESS)
+                if (iSW_EVENT_GET(&hisw1[1], iSW_EVENT_PRESS))
                 {
                     debugPrint("KEY1 press start\n\r");
                 }
-                if (hisw1[1].events & iSW_EVENT_CLICK)
+                if (iSW_EVENT_GET(&hisw1[1], iSW_EVENT_CLICK))
                 {
                     debugPrint("KEY1 click\n\r");
                 }
-                if (hisw1[1].events & iSW_EVENT_REPEAT)
+                if (iSW_EVENT_GET(&hisw1[1], iSW_EVENT_REPEAT))
                 {
                     debugPrint("KEY1 repeat:%d\n\r", iSW_Get_RepeatCnt(&hisw1[1]));
                 }
-                if (hisw1[1].events & iSW_EVENT_RELEASE)
+                if (iSW_EVENT_GET(&hisw1[1], iSW_EVENT_RELEASE))
                 {
                     debugPrint("KEY1 release\n\r");
                 }
             }
-            if (hisw1[2].events)
+            if (iSW_EVENT_GET(&hisw1[2], iSW_EVENT_ALL))
             {
-                if (hisw1[2].events & iSW_EVENT_CLICK)
+                if (iSW_EVENT_GET(&hisw1[2], iSW_EVENT_CLICK))
                 {
                     debugPrint("KEY2 click\n\r");
                 }
-                if (hisw1[2].events & iSW_EVENT_REPEAT)
+                if (iSW_EVENT_GET(&hisw1[2], iSW_EVENT_REPEAT))
                 {
                     debugPrint("KEY2 repeat:%d\n\r", iSW_Get_RepeatCnt(&hisw1[2]));
                 }
-                if (hisw1[2].events & iSW_EVENT_DOUBLE_CLICK)
+                if (iSW_EVENT_GET(&hisw1[2], iSW_EVENT_DOUBLE_CLICK))
                 {
                     debugPrint("KEY2 double click\n\r");
                 }
-                // 组合键
-                if (iSW_IS_PRESS(&hisw1[0]))
-                {
-                    debugPrint("KEY0 and KEY2 press\n\r");
-                }
             }
-            if (hisw1[3].events)
+            if (iSW_EVENT_GET(&hisw1[3], iSW_EVENT_ALL))
             {
-                if (hisw1[3].events & iSW_EVENT_PRESS)
+                if (iSW_EVENT_GET(&hisw1[3], iSW_EVENT_PRESS))
                 {
                     debugPrint("KEY3 press start\n\r");
                 }
-                if (hisw1[3].events & iSW_EVENT_LONG)
+                if (iSW_EVENT_GET(&hisw1[3], iSW_EVENT_LONG))
                 {
                     debugPrint("KEY3 long press\n\r");
                 }
-                if (hisw1[3].events & iSW_EVENT_SHORT)
+                if (iSW_EVENT_GET(&hisw1[3], iSW_EVENT_SHORT))
                 {
                     debugPrint("KEY3 short press\n\r");
                 }
-                if (hisw1[3].events & iSW_EVENT_RELEASE)
+                if (iSW_EVENT_GET(&hisw1[3], iSW_EVENT_RELEASE))
                 {
                     debugPrint("KEY3 release\n\r");
                 }
